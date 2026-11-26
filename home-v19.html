@@ -1107,6 +1107,25 @@ b.en{direction:ltr;unicode-bidi:isolate}
 .ba-seg button[aria-pressed=true]{background:#E0601A;color:#fff;box-shadow:0 6px 18px rgba(224,96,26,.45)}
 .ba-seg button:focus-visible{outline:2px solid #FF9A55;outline-offset:2px}
 .ba{touch-action:pan-y;cursor:ew-resize}
+/* v21: natural framing, calm hover, no overlaps */
+.sc img,.ba img{object-fit:contain!important}
+.sc .in{background:#161513}
+#obj .ow,.h15 .mframe .ow{display:none!important}
+.h15 .pill.p3{display:none!important}
+.h15 .pill.p1{top:9.6%!important;left:calc(50% - 85px)!important;rotate:-3deg;font-size:clamp(.7rem,.95vw,.9rem)}
+.h15 .pill.p2{top:9.6%!important;right:auto!important;left:calc(50% + 205px)!important;rotate:2deg;font-size:clamp(.7rem,.95vw,.9rem)}
+html[lang=en] .h15 .pill.p1{top:9.6%!important}
+@media(max-width:1180px) and (min-width:861px){.h15 .pill.p2{display:none}}
+.sc.s2{--x:36%!important;--y:86%!important}.sc.s8{--x:44.5%!important;--y:86%!important}.sc.s9{--x:53%!important;--y:86%!important}
+/* hover: ring + colour shift only, nothing scales or moves the image */
+.gp figure img,.pc figure img,.cdc img,.svc img{transition:none!important}
+.gp figure:hover img,.pc figure:hover img{transform:none!important}
+.cdc:not(.ctat):hover,.cdc.fxd,.ctat:hover{translate:none!important}
+.gp figure,.pc figure,.cdc{transition:box-shadow .35s ease,outline-color .35s ease;outline:2px solid transparent;outline-offset:3px}
+@media(hover:hover){.gp figure:hover,.pc figure:hover,.cdc:hover{outline-color:rgba(255,154,85,.75)}
+.btn:hover,.ib:hover{transform:none!important}
+.step:hover{transform:none!important}}
+@media(max-width:860px){.h15 .pill.p1,.h15 .pill.p2{left:auto!important}}
 </style><script>(function(){
 var g=window.gsap,ST=window.ScrollTrigger;if(!g)return;
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches,FINE=matchMedia('(hover:hover) and (pointer:fine)').matches;
@@ -1196,7 +1215,7 @@ function prepH1(){
 prepH1();
 new MutationObserver(function(){if(!h1Busy&&!$('.wrd',h1)){prepH1();if(ready)gsap.set(words,{yPercent:0})}}).observe(h1,{childList:true});
 /* ---------- placement of the traveling object (ref: Oryzo) ---------- */
-function heroRect(){var vw=innerWidth,vh=innerHeight,H=Math.max(360,Math.min(vh*.62,640));return{cx:vw/2,cy:vh*.54,w:H*.75,h:H}}
+function heroRect(){var vw=innerWidth,vh=innerHeight,H=Math.max(360,Math.min(vh*.62,640)),nr=(oImg&&oImg.naturalWidth&&oImg.naturalHeight)?oImg.naturalWidth/oImg.naturalHeight:.75;nr=Math.max(.55,Math.min(.9,nr));return{cx:vw/2,cy:vh*.54,w:H*nr,h:H}}
 function lerp(a,b,t){return a+(b-a)*t}
 function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
 var objOn=true;
@@ -1357,29 +1376,29 @@ var rz;addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(funct
 
 /* ---------- collage image rotation (v19) ---------- */
 var POOL={s1:['t361','t384','t55'],s2:['t83','t428'],s3:['t300','t213'],s4:['t271','t248'],s5:['t238','t378'],s6:['t282','t322'],s7:['t312','t455'],s8:['t236','t8'],s9:['t436','t428'],c0:['gold','t455','t436']};
-var swapOn=false,swapI=0,ORDER=['s3','s7','s1','s9','s5','s6','s4','s8','s2','c0'];
+var lastK='',swapOn=false,swapI=0,ORDER=['s3','s7','s1','s9','s5','s6','s4','s8','s2','c0'];
 function startSwap(){
  if(swapOn||reduced)return;swapOn=true;
  var cur={};ORDER.forEach(function(k){var im=$('.sc.'+k+' img');cur[k]=0;if(im&&POOL[k]){var m=im.getAttribute('src').match(/\/([a-z0-9]+)\.webp/);var ix=m?POOL[k].indexOf(m[1]):0;cur[k]=ix<0?0:ix}});
+ $$('.sc img').forEach(function(im){var f=function(){if(im.naturalWidth)im.closest('.sc').style.setProperty('--ar',im.naturalWidth+'/'+im.naturalHeight)};im.complete?f():im.addEventListener('load',f)});
  function tick(){
   if(document.hidden||performance.now()-lastSc<400){return}
   var hr=h15.getBoundingClientRect();if(hr.bottom<innerHeight*.35)return;
-  var k=ORDER[swapI++%ORDER.length],el=$('.sc.'+k);
+  var k,kk=0;do{k=ORDER[Math.floor(Math.random()*ORDER.length)];kk++}while(k===lastK&&kk<6);lastK=k;var el=$('.sc.'+k);
   if(!el||el.offsetParent===null&&getComputedStyle(el).display==='none'){return}
   var n=(cur[k]+1)%POOL[k].length;for(var g=0;g<POOL[k].length;g++){var tryN=(cur[k]+1+g)%POOL[k].length,used=false;ORDER.forEach(function(o){if(o!==k&&POOL[o][cur[o]]===POOL[k][tryN])used=true});if(!used){n=tryN;break}}var src='img15/h/'+POOL[k][n]+'.webp',host=$('.in',el),old=$('img',host);
   var nim=new Image();nim.alt='';nim.decoding='async';
   nim.onload=function(){
    var go=function(){
-    nim.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.14)';
+    nim.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0';el.style.setProperty('--ar',nim.naturalWidth+'/'+nim.naturalHeight);
     host.insertBefore(nim,old.nextSibling);cur[k]=n;
-    gsap.to(nim,{opacity:1,scale:1,duration:1,ease:'power2.out',onComplete:function(){old.src=src;nim.remove()}});
-    gsap.to(old,{scale:.94,duration:1,ease:'power2.inOut'});
+    gsap.to(nim,{opacity:1,duration:.9,ease:'power1.inOut',onComplete:function(){old.src=src;nim.remove()}});
    };
    (nim.decode?nim.decode().then(go,go):go());
   };
   nim.src=src;
  }
- setTimeout(function(){tick();setInterval(tick,1100)},1200);
+ (function loop(){tick();setTimeout(loop,600+Math.random()*1700)})();
 }
 /* ---------- before / after (v19) ---------- */
 $$('.ba').forEach(function(c,ci){

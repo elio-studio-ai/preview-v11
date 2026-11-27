@@ -2034,6 +2034,34 @@ try{
 })();
 
 </script>
+<script id="fx43">
+(function(){
+"use strict";
+/* v43: visible build tag + mobile robustness for the scroll fly (fx41) and the
+   hero entrance (fx42). */
+try{
+  var tag=document.createElement('div');
+  tag.id='fxbuild';
+  tag.setAttribute('aria-hidden','true');
+  tag.textContent='BUILD v42';
+  tag.style.cssText='position:fixed;left:8px;bottom:8px;z-index:9999;pointer-events:none;font:700 10px/1.4 system-ui,Arial,sans-serif;letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:5px;direction:ltr';
+  document.body.appendChild(tag);
+}catch(e){}
+function refresh(){ try{ if(window.ScrollTrigger) ScrollTrigger.refresh(); }catch(e){} }
+window.addEventListener('load',function(){ setTimeout(refresh,400); setTimeout(refresh,1600); setTimeout(refresh,3200); });
+var rt=null;
+window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(refresh,250); });
+window.addEventListener('orientationchange',function(){ setTimeout(refresh,400); });
+/* the hero entrance changes nothing in layout, but the loader and the shuffled
+   hero images do: refresh once the entrance has settled */
+var h=document.querySelector('.h15');
+if(h&&window.MutationObserver){
+  var mo=new MutationObserver(function(){ if(h.classList.contains('v38in')){ mo.disconnect(); setTimeout(refresh,1400); setTimeout(refresh,3000); } });
+  mo.observe(h,{attributes:true,attributeFilter:['class']});
+}
+})();
+
+</script>
 </body>
 
 

@@ -1944,7 +1944,7 @@ try{
       if(p<=0.001){ fly.style.opacity=0; if(anchorImg) gsap.set(anchorImg,{opacity:1}); if(counterEl) counterEl.textContent='01'; cur=-1; return; }
       var e=ease(Math.min(1,p));
       var sc=1+.06*Math.sin(e*Math.PI);
-      w=lerp(A.w,B.w,e)*sc; h=lerp(A.h,B.h,e)*sc;
+      var w=lerp(A.w,B.w,e)*sc, h=lerp(A.h,B.h,e)*sc;
       var cx=lerp(A.x+A.w/2, B.x+B.w/2, e), cy=lerp(A.y+A.h/2, B.y+B.h/2, e);
       var vy=cy - window.scrollY;
       fly.style.opacity = p>.985 ? String(Math.max(0,(1-p)/.015)) : '1';

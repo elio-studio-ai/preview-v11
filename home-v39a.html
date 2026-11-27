@@ -1993,6 +1993,47 @@ try{
 })();
 
 </script>
+<script id="fx42">
+(function(){
+"use strict";
+/* v42: the v25 hero entrance, on the phone collage - cards wipe up from the bottom
+   one after another (clip-path inset 100%->0, 1.1s, stagger .12, power4.inOut) while
+   their images de-zoom from 1.3 to 1 (1.5s, stagger .12, power3.out).
+   Same durations, stagger and easings as the v25 build. Phone only. */
+if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+if(!window.gsap) return;
+if(!window.matchMedia('(max-width:860px)').matches) return;
+try{
+  var st=document.createElement('style');
+  st.textContent='@media(max-width:860px){.h15.v38in .coll .sc{animation:none!important}}';
+  (document.head||document.documentElement).appendChild(st);
+  var cards=[],imgs=[];
+  function pick(){
+    cards=[].slice.call(document.querySelectorAll('.h15 .coll .sc')).filter(function(c){return getComputedStyle(c).display!=='none'});
+    imgs=cards.map(function(c){return c.querySelector('img')}).filter(Boolean);
+  }
+  pick();
+  if(!cards.length) return;
+  gsap.set(cards,{clipPath:'inset(100% 0 0 0)'});
+  gsap.set(imgs,{scale:1.3});
+  var done=false;
+  function play(){
+    if(done) return; done=true;
+    pick();
+    gsap.to(cards,{clipPath:'inset(0% 0 0 0)',duration:1.1,stagger:.12,ease:'power4.inOut'});
+    gsap.to(imgs,{scale:1,duration:1.5,stagger:.12,ease:'power3.out'});
+  }
+  var h=document.querySelector('.h15');
+  if(h&&h.classList.contains('v38in')) setTimeout(play,150);
+  else if(h){
+    var mo=new MutationObserver(function(){ if(h.classList.contains('v38in')){ mo.disconnect(); setTimeout(play,150); } });
+    mo.observe(h,{attributes:true,attributeFilter:['class']});
+  }
+  setTimeout(function(){ if(!done) play(); },7000);
+}catch(e){}
+})();
+
+</script>
 </body>
 
 

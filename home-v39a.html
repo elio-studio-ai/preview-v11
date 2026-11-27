@@ -1867,42 +1867,48 @@ ready(function(){
   #fxfly .gs img{position:absolute;left:0;width:100%}
 }
 </style>
-<script id="fx40">
+<script id="fx41">
 (function(){
 "use strict";
-/* v40: restore the scroll-driven hero image — the anchor hero image lifts out of the
-   collage on scroll, glitch-swaps through curated shots (SHOT 01/03), and flies down
-   into the first work card. Desktop AND phone. Reduced-motion: skip. */
+/* v41: the v34/v35 scroll-driven hero image, restored with its ORIGINAL motion math
+   (heroRect size, ease-in-out travel over exactly one viewport, ±3.2deg wobble,
+   glitch strip swaps + SHOT 01/02/03, dock into the work frame).
+   Works on phone AND desktop. Reduced-motion: skipped. */
 if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 if(!window.gsap || !window.ScrollTrigger) return;
 function ready(fn){ if(document.readyState==='complete') fn(); else window.addEventListener('load',fn); }
 ready(function(){
 try{
   var hero=document.querySelector('.h15');
-  var anchor=document.querySelector('.h15 .coll .sc');
+  var anchor=document.querySelector('.h15 .coll .sc.c0')||document.querySelector('.h15 .coll .sc');
+  var work=document.getElementById('work');
   var targetCard=document.querySelector('.cdg .cdc');
-  if(!hero||!anchor||!targetCard) return;
+  if(!hero||!anchor||!work||!targetCard) return;
   var targetMedia=targetCard.querySelector('.cdm')||targetCard;
   var anchorImg=anchor.querySelector('img');
   var counterEl=document.querySelector('.h15 .ctr b');
 
-  /* curated fly-through shots (v35-era hero shots, strong full compositions) */
-  var SHOTS=[anchorImg?anchorImg.getAttribute('src'):null,'img15/h/gold.webp','img15/p/t455.webp','img15/p/t436.webp'].filter(Boolean);
+  /* the three hero shots the original flew through */
+  var SHOTS=['img15/h/gold.webp','img15/p/t455.webp','img15/p/t436.webp'];
+  function syncLastShot(){
+    var im=targetMedia.querySelector('img');
+    var src=im&&(im.currentSrc||im.getAttribute('src'));
+    if(src&&src!==SHOTS[2]){ SHOTS[2]=src; cur=-1; }
+  }
 
-  /* build the flyer (own element; dormant #obj machinery untouched) */
-  var fly=document.createElement('div'); fly.id='fxfly'; fly.setAttribute('aria-hidden','true');
+  /* ---- flyer ---- */
+  var fly=document.createElement('div'); fly.id='fxfly'; fly.setAttribute('aria-hidden','true'); fly.style.transformOrigin='0 0';
   fly.innerHTML='<div class="oi"><img alt=""></div>';
   document.body.appendChild(fly);
   var flyImg=fly.querySelector('img');
   var oi=fly.firstElementChild;
 
-  /* glitch strip swap (Palace-style, same as the v35 original) */
+  /* glitch strip swap (same effect as the v35 original) */
   var cur=-1, swapping=false;
   function setShot(k){
     if(k===cur) return; cur=k;
     var src=SHOTS[k];
-    if(swapping){ flyImg.src=src; return; }
-    if(!flyImg.getAttribute('src')){ flyImg.src=src; return; }
+    if(!flyImg.getAttribute('src')||swapping){ flyImg.src=src; return; }
     swapping=true;
     var pre=new Image(); pre.src=src;
     var go=function(){
@@ -1919,46 +1925,73 @@ try{
          onComplete:function(){ flyImg.src=src; st.forEach(function(s){s.remove()}); swapping=false; }});
     };
     if(pre.complete) go(); else { pre.onload=go; pre.onerror=go; }
-    if(counterEl) counterEl.textContent='0'+(k+1);
   }
 
-  var A=null,B=null;
-  function measure(){
-    var r=anchor.getBoundingClientRect();
-    A={x:r.left, y:r.top+window.scrollY, w:r.width, h:r.height, rot:0};
-    var m=/(?:rotate|matrix)\(([^)]*)\)/.exec(getComputedStyle(anchor).transform)||[];
-    var t2=targetMedia.getBoundingClientRect();
-    B={x:t2.left, y:t2.top+window.scrollY, w:t2.width, h:t2.height};
+  /* ---- geometry: the ORIGINAL heroRect() from v34/v35 ---- */
+  var A2={cx:0,cy:0,w:0,h:0}, rot0=0, B={x:0,y:0,w:0,h:0}, A0={x:0,y:0,w:0,h:0};
+  function anchorRot(){
+    var t=getComputedStyle(anchor).transform;
+    var m=/matrix\(([^)]+)\)/.exec(t);
+    if(!m) return 0;
+    var v=m[1].split(',').map(parseFloat);
+    return Math.atan2(v[1],v[0])*180/Math.PI;
   }
-  measure();
-  window.addEventListener('resize',measure);
+  function measure(){
+    var vw=innerWidth, vh=innerHeight;
+    var r=anchor.getBoundingClientRect();
+    A0={x:r.left,y:r.top,w:r.width,h:r.height};
+    rot0=anchorRot();
+    var nr=(anchorImg&&anchorImg.naturalWidth&&anchorImg.naturalHeight)?anchorImg.naturalWidth/anchorImg.naturalHeight:.75;
+    nr=Math.max(.55,Math.min(.9,nr));
+    var H=Math.max(360,Math.min(vh*.62,640));
+    var w=H*nr;
+    if(w>vw*.88){ w=vw*.88; H=w/nr; }
+    A2={cx:r.left+r.width/2, cy:vh*.54, w:w, h:H};
+    fly.style.width=A2.w+'px'; fly.style.height=A2.h+'px'; fly.style.borderRadius='22px';
+  }
+  measure(); syncLastShot();
+  window.addEventListener('resize',function(){measure();syncLastShot();});
 
   function lerp(a,b,t){ return a+(b-a)*t; }
   function ease(t){ return t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+  function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
-  var st=ScrollTrigger.create({
-    trigger:'#work', start:'top bottom', end:'top 12%', scrub:true,
+  var lastP=0, st=ScrollTrigger.create({
+    trigger:work, start:'top bottom', end:'top top', scrub:true,
     onRefresh:measure,
     onUpdate:function(self){
-      var p=self.progress;
-      if(p<=0.001){ fly.style.opacity=0; if(anchorImg) gsap.set(anchorImg,{opacity:1}); if(counterEl) counterEl.textContent='01'; cur=-1; return; }
-      var e=ease(Math.min(1,p));
-      var sc=1+.06*Math.sin(e*Math.PI);
-      var w=lerp(A.w,B.w,e)*sc, h=lerp(A.h,B.h,e)*sc;
-      var cx=lerp(A.x+A.w/2, B.x+B.w/2, e), cy=lerp(A.y+A.h/2, B.y+B.h/2, e);
-      var vy=cy - window.scrollY;
+      var p=clamp(self.progress,0,1); lastP=p;
+      var tgt=targetMedia.getBoundingClientRect();
+      B={x:tgt.left,y:tgt.top,w:tgt.width,h:tgt.height};
+      if(p<=0.002){ fly.style.opacity='0'; if(counterEl) counterEl.textContent='01'; cur=-1; return; }
+      /* phase 1 (0 -> .18): the collage card swells to the original hero size
+         phase 2 (.18 -> 1): the original travel, ease-in-out, exactly one viewport */
+      var g=clamp(p/.18,0,1);
+      var e1=g<.5?2*g*g:1-Math.pow(-2*g+2,2)/2;
+      var x,y,w,h;
+      if(p<.18){
+        x=lerp(A0.x,A2.cx-A2.w/2,e1); y=lerp(A0.y,A2.cy-A2.h/2,e1);
+        w=lerp(A0.w,A2.w,e1); h=lerp(A0.h,A2.h,e1);
+      }else{
+        var e=ease((p-.18)/.82);
+        w=lerp(A2.w,B.w,e); h=lerp(A2.h,B.h,e);
+        var cx=lerp(A2.cx,B.x+B.w/2,e), cy=lerp(A2.cy,B.y+B.h/2,e);
+        x=cx-w/2; y=cy-h/2;
+      }
+      var wob=Math.sin(p*Math.PI*2)*3.2;
+      var rot=lerp(rot0,0,ease(p))+wob*(1-p);
+      var sc=w/A2.w;
       fly.style.opacity = p>.985 ? String(Math.max(0,(1-p)/.015)) : '1';
-      fly.style.width=w+'px'; fly.style.height=h+'px';
-      fly.style.transform='translate('+(cx-w/2)+'px,'+(vy-h/2)+'px) rotate('+lerp(-4,0,e)+'deg)';
-      if(anchorImg) gsap.set(anchorImg,{opacity: p<.12 ? 1-Math.min(1,p/.08) : 0});
-      /* glitch swaps through the curated shots */
-      var k = e<.34 ? 0 : e<.67 ? Math.min(1,SHOTS.length-1) : Math.min(2,SHOTS.length-1);
+      fly.style.transform='translate('+x.toFixed(2)+'px,'+y.toFixed(2)+'px) scale('+sc.toFixed(4)+') rotate('+rot.toFixed(2)+'deg)';
+      var k = p<.3 ? 0 : p<.62 ? 1 : 2;
       setShot(k);
+      if(counterEl) counterEl.textContent='0'+(k+1);
     }
   });
 }catch(e){}
 });
 })();
+
 </script>
 </body>
 

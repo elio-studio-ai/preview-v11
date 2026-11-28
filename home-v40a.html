@@ -13,7 +13,7 @@ if(hero&&!document.querySelector('.v40reel')&&IMGS.length>3){
   reel.innerHTML='<div class="rlab">شغل <b>ELIO</b> &nbsp;·&nbsp; Concept Projects</div>';
   var pills=[['أحذية',''],['شنط','o'],['أزياء',''],['عناية','o'],['حملات',''],['إنتاج','o']];
   function row(cls,n,off){var r=el('div','v40row '+cls),p=[];
-    for(var i=0;i<n;i++){var im=IMGS[(i+off)%IMGS.length];if(im)p.push('<img src="'+im+'" alt="" loading="lazy">');
+    for(var i=0;i<n;i++){var im=IMGS[(i+off)%IMGS.length];if(im)p.push('<img src="'+im+'" alt="" decoding="async">');
       if(i%2===0){var q=pills[(i+off)%pills.length];p.push('<span class="pill40 '+q[1]+'">'+q[0]+'</span>');}}
     r.innerHTML=p.join('')+p.join('');return r;}
   reel.appendChild(row('r1',8,0));reel.appendChild(row('r2',8,3));
@@ -56,12 +56,16 @@ if(cats&&!document.getElementById('v40dial')){
 }
 var brand=document.querySelector('.brand');
 if(brand&&!brand.querySelector('.v40-brand-img')){
-  var sv=brand.querySelector('svg');
+  var sv=brand.querySelector('img.logo')||brand.querySelector('svg');
   if(sv){var im=new Image();im.src=A.wm_cream;im.alt='ELIO';im.className='v40-brand-img';im.style.height=(innerWidth<861?'22px':'26px');im.style.width='auto';im.style.display='block';sv.replaceWith(im);}
 }
 var work=document.getElementById('work');
 if(work&&!work.querySelector('.v40-smark')){var sm=new Image();sm.src=A.ic_lines;sm.className='v40-smark';sm.alt='';work.insertBefore(sm,work.firstChild);}
 try{var fav=document.querySelector('link[rel~="icon"]');if(fav)fav.setAttribute('href',A.ic_lines);}catch(e){}
+
+var fi=document.querySelector('footer .foot-ics');
+if(fi&&!document.querySelector('.v40-fmark')){var fw=document.createElement('div');fw.className='v40-fmark';fw.innerHTML='<img src="'+A.wm_cream+'" alt="ELIO" style="height:22px;width:auto"><img src="'+A.ic_lines+'" alt="" style="height:30px;width:auto">';fi.parentNode.insertBefore(fw,fi);}
+
 })();</script><style type="text/plain" id="pc">/* ===== v40 preview patch: ELIO olive / beige / orange ===== */
 :root{--v40o:#F26A1B;--v40g:#3C4A2E;--v40g2:#2C3722;--v40c:#EDE3D2;--v40d:#241F19}
 
@@ -116,6 +120,11 @@ try{var fav=document.querySelector('link[rel~="icon"]');if(fav)fav.setAttribute(
 .v40-brand img{height:26px;width:auto;display:block}
 .v40-smark{display:block;width:34px;height:auto;margin:0 auto 10px;opacity:.95}
 @media (max-width:860px){.v40-brand img{height:22px}}
+
+.v40reel,.v40row{direction:ltr}
+.v40row img{background:#2d3a23;min-width:150px}
+.v40-fmark{display:flex;align-items:center;gap:12px;margin:10px 0;direction:ltr}
+.foot-ics .ib,.nav-ics .ib{color:#EFE6D2!important;transition:color .2s,transform .2s}.foot-ics .ib:hover,.nav-ics .ib:hover{color:#FF7A1A!important;transform:translateY(-2px)}
 </style><script>
 var PJ=document.getElementById('pj').textContent,PC=document.getElementById('pc').textContent;
 fetch('home-v39a.html',{cache:'no-store'}).then(function(r){return r.text()}).then(function(h){
